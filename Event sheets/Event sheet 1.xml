@@ -1,0 +1,577 @@
+﻿<?xml version="1.0" encoding="utf-8" ?>
+<c2eventsheet>
+    <!--All the 'name' attributes are ignored by Construct 2 - they are there for readability only.-->
+    <name>Event sheet 1</name>
+    <events>
+        <variable constant="0" name="lastshot" sid="4023102766658519" static="0" type="number">0</variable>
+        <variable constant="0" name="CheckCode" sid="1630796131826514" static="0" type="text"></variable>
+        <comment>on start we also pick a random spawn point, and place our player there&#x0D;&#x0A;If we have an existing check code, it will be passed to the function request too</comment>
+        <event-block sid="3462424195348935">
+            <conditions>
+                <condition id="-2" name="On start of layout" sid="9831866745087634" type="System" />
+                <condition id="-16" name="Pick random instance" sid="5904413932827742" type="System">
+                    <param id="0" name="Object">spawnpoint</param>
+                </condition>
+            </conditions>
+            <actions>
+                <action id="-4" name="Set position to another object" sid="7209117092442572" type="playerbase">
+                    <param id="0" name="Object">spawnpoint</param>
+                    <param id="1" name="Image point (optional)">0</param>
+                </action>
+                <action id="-4" name="Set position to another object" sid="2888974048982608" type="player">
+                    <param id="0" name="Object">playerbase</param>
+                    <param id="1" name="Image point (optional)">0</param>
+                </action>
+                <action id="-9" name="Set value" sid="8043029616537643" type="System">
+                    <param id="0" name="Variable">CheckCode</param>
+                    <param id="1" name="Value">WebStorage.LocalValue(&quot;code&quot;)</param>
+                </action>
+                <action id="0" name="Call function" sid="7885482354154692" type="Function">
+                    <param id="0" name="Name">&quot;requesting&quot;</param>
+                    <param id="1" name="Parameter {n}">&quot;checkplayer&quot;{###}&quot;-&quot;{###}CheckCode</param>
+                </action>
+                <action id="-12" name="Set group active" sid="7802813744048628" type="System">
+                    <param id="0" name="Group name">&quot;GetInfo&quot;</param>
+                    <param id="1" name="State">1</param>
+                </action>
+            </actions>
+        </event-block>
+        <comment>this is our default function to the Ajax calls, the first paramter determines what call it will be.</comment>
+        <event-block sid="2169020510539228">
+            <conditions>
+                <condition id="0" name="On function" sid="5744213752243464" type="Function">
+                    <param id="0" name="Name">&quot;requesting&quot;</param>
+                </condition>
+            </conditions>
+            <actions>
+                <action id="2" name="Post to URL" sid="4886016756980081" type="AJAX">
+                    <param id="0" name="Tag">&quot;request&quot;</param>
+                    <param id="1" name="URL">&quot;https://lennaerthohe.nl/multiplayer/requesting.php&quot;</param>
+                    <param id="2" name="Data">&quot;request=&quot;&amp;Function.Param(0)&amp;&quot;&amp;extra=&quot;&amp;Function.Param(1)&amp;&quot;&amp;code=&quot;&amp;CheckCode</param>
+                </action>
+            </actions>
+        </event-block>
+        <event-group description="" sid="8738191398304303" title="GetInfo">
+            <sub-events>
+                <comment>I am a big fan of using to pipe sign |  in combination with tokenat, a way to itterate through values in a text string by means of a common character.&#x0D;&#x0A;As you can see, the requesting complete also uses it to check for the first value in the return string before |&#x0D;&#x0A;We set the CheckCode we got from PHP, and set our Player unitID which relats to an ID in the database.</comment>
+                <event-block sid="8500620480159462">
+                    <conditions>
+                        <condition id="0" name="On completed" sid="5785588375550445" type="AJAX">
+                            <param id="0" name="Tag">&quot;request&quot;</param>
+                        </condition>
+                        <condition id="-8" name="Compare two values" sid="3591156815127235" type="System">
+                            <param id="0" name="First value">tokenat(AJAX.LastData, 0,&quot;|&quot;)</param>
+                            <param id="1" name="Comparison">0</param>
+                            <param id="2" name="Second value">&quot;playeractive&quot;</param>
+                        </condition>
+                    </conditions>
+                    <actions>
+                        <action id="-9" name="Set value" sid="2186123891107427" type="System">
+                            <param id="0" name="Variable">CheckCode</param>
+                            <param id="1" name="Value">tokenat(AJAX.LastData, 1,&quot;|&quot;)</param>
+                        </action>
+                        <action id="-10" name="Set value" sid="8466898695913976" type="player">
+                            <param id="0" name="Instance variable">UnitId</param>
+                            <param id="1" name="Value">int(tokenat(AJAX.LastData, 2, &quot;|&quot;))</param>
+                        </action>
+                        <action id="0" name="Call function" sid="5896175596041676" type="Function">
+                            <param id="0" name="Name">&quot;requesting&quot;</param>
+                            <param id="1" name="Parameter {n}">&quot;updateplayerpositions&quot;{###}int(playerbase.X) &amp; &quot;-&quot;&amp; int(playerbase.Y) &amp;&quot;-&quot;&amp; int(playerbase.Angle)&amp;&quot;-&quot;&amp;player.unitid{###}CheckCode</param>
+                        </action>
+                    </actions>
+                </event-block>
+                <comment>seeing as Ajax request will be flying by like crazy, its good practice to stuff the data from the Ajax.Lastdata in a local variable during every loop</comment>
+                <variable constant="0" name="enemyid" sid="2779414687587963" static="0" type="number">0</variable>
+                <variable constant="0" name="enemyid2" sid="5503042322229334" static="0" type="text"></variable>
+                <variable constant="0" name="TempValue" sid="1262938734454705" static="0" type="text"></variable>
+                <variable constant="0" name="playerstate" sid="4302263524125196" static="0" type="text"></variable>
+                <variable constant="0" name="enemyunits" sid="6488838078782638" static="0" type="text"></variable>
+                <variable constant="0" name="gameShots" sid="1119164059050603" static="0" type="text"></variable>
+                <event-block sid="1710815034933517">
+                    <conditions>
+                        <condition id="0" name="On completed" sid="8113328353439662" type="AJAX">
+                            <param id="0" name="Tag">&quot;request&quot;</param>
+                        </condition>
+                        <condition id="-8" name="Compare two values" sid="4385273243142196" type="System">
+                            <param id="0" name="First value">tokenat(AJAX.LastData, 0,&quot;|&quot;)</param>
+                            <param id="1" name="Comparison">0</param>
+                            <param id="2" name="Second value">&quot;updateplayerspositions&quot;</param>
+                        </condition>
+                        <condition id="-8" name="Compare two values" sid="867095859409532" type="System">
+                            <param id="0" name="First value">tokenat(AJAX.LastData,2,&quot;|&quot;)</param>
+                            <param id="1" name="Comparison">0</param>
+                            <param id="2" name="Second value">CheckCode</param>
+                        </condition>
+                    </conditions>
+                    <actions>
+                        <action id="-9" name="Set value" sid="2751534159826491" type="System">
+                            <param id="0" name="Variable">TempValue</param>
+                            <param id="1" name="Value">AJAX.LastData</param>
+                        </action>
+                        <action id="-9" name="Set value" sid="4154901671029036" type="System">
+                            <param id="0" name="Variable">enemyunits</param>
+                            <param id="1" name="Value">tokenat(TempValue,1,&quot;|&quot;)</param>
+                        </action>
+                        <action id="0" name="Set text" sid="2250604420617231" type="kills">
+                            <param id="0" name="Text">&quot;kills: &quot; &amp; tokenat(TempValue,6,&quot;|&quot;)</param>
+                        </action>
+                        <action id="-9" name="Set value" sid="1902451686657735" type="System">
+                            <param id="0" name="Variable">playerstate</param>
+                            <param id="1" name="Value">tokenat(TempValue,5,&quot;|&quot;)</param>
+                        </action>
+                        <action id="0" name="Set text" sid="6454759665589114" type="killed">
+                            <param id="0" name="Text">&quot;Killed: &quot; &amp; tokenat(TempValue,7,&quot;|&quot;)</param>
+                        </action>
+                        <action id="-9" name="Set value" sid="1442606928423281" type="System">
+                            <param id="0" name="Variable">gameShots</param>
+                            <param id="1" name="Value">tokenat(TempValue, 4,&quot;|&quot;)</param>
+                        </action>
+                    </actions>
+                    <sub-events>
+                        <variable constant="0" name="messages" sid="3248494940448517" static="0" type="text"></variable>
+                        <comment>If there are messages present, this will pick them up and display them.</comment>
+                        <event-block sid="4088815550108614">
+                            <conditions>
+                                <condition id="-8" name="Compare two values" sid="2380884388301797" type="System">
+                                    <param id="0" name="First value">tokenat(TempValue,8,&quot;|&quot;)</param>
+                                    <param id="1" name="Comparison">0</param>
+                                    <param id="2" name="Second value">&quot;messages&quot;</param>
+                                </condition>
+                            </conditions>
+                            <actions>
+                                <action id="-9" name="Set value" sid="2304744847885828" type="System">
+                                    <param id="0" name="Variable">messages</param>
+                                    <param id="1" name="Value">tokenat(TempValue,9,&quot;|&quot;)</param>
+                                </action>
+                                <action id="0" name="Set text" sid="6600782197461609" type="messages">
+                                    <param id="0" name="Text">tokenat(TempValue,9,&quot;|&quot;)</param>
+                                </action>
+                                <action behavior="Fade" id="0" name="Restart fade" sid="6483818323429629" type="messages" />
+                            </actions>
+                        </event-block>
+                        <comment>Here, when game shots are available, it will loop through the game shots and fire it from the appropiate enemy</comment>
+                        <event-block sid="5652080181705857">
+                            <conditions>
+                                <condition id="-8" name="Compare two values" sid="6511654050734098" type="System">
+                                    <param id="0" name="First value">tokenat(TempValue,3,&quot;|&quot;)</param>
+                                    <param id="1" name="Comparison">0</param>
+                                    <param id="2" name="Second value">&quot;gameshots&quot;</param>
+                                </condition>
+                            </conditions>
+                            <actions />
+                            <sub-events>
+                                <event-block collapsed="1" sid="9662560323694612">
+                                    <conditions>
+                                        <condition id="-10" name="For" sid="2673942948725432" type="System">
+                                            <param id="0" name="Name">&quot;LoopTokens&quot;</param>
+                                            <param id="1" name="Start index">0</param>
+                                            <param id="2" name="End index">tokencount(gameShots,&quot;[-]&quot;)  - 1</param>
+                                        </condition>
+                                    </conditions>
+                                    <actions>
+                                        <action id="-9" name="Set value" sid="165505056084025" type="System">
+                                            <param id="0" name="Variable">enemyid2</param>
+                                            <param id="1" name="Value">tokenat(tokenat(gameShots ,loopindex,&quot;[-]&quot;), 0 , &quot;[]&quot;)</param>
+                                        </action>
+                                    </actions>
+                                    <sub-events>
+                                        <event-block sid="1976440976250849">
+                                            <conditions>
+                                                <condition id="-34" name="Pick by evaluate" sid="2453229055230681" type="System">
+                                                    <param id="0" name="Object">Enemies</param>
+                                                    <param id="1" name="Expression">int(Enemies.unitid) = int(enemyid2)</param>
+                                                </condition>
+                                            </conditions>
+                                            <actions>
+                                                <action id="0" name="Spawn another object" sid="3781879786460259" type="Enemies">
+                                                    <param id="0" name="Object">bullet2</param>
+                                                    <param id="1" name="Layer">0</param>
+                                                    <param id="2" name="Image point">0</param>
+                                                </action>
+                                                <action id="-10" name="Set value" sid="6868451905873365" type="bullet2">
+                                                    <param id="0" name="Instance variable">shooter</param>
+                                                    <param id="1" name="Value">int(Enemies.unitid)</param>
+                                                </action>
+                                                <action id="-8" name="Set angle" sid="3639245000553019" type="bullet2">
+                                                    <param id="0" name="Angle">Enemies.enemyangle</param>
+                                                </action>
+                                                <action behavior="Bullet" id="5" name="Set enabled" sid="7276278037614572" type="bullet2">
+                                                    <param id="0" name="State">1</param>
+                                                </action>
+                                                <action behavior="Bullet" id="3" name="Set angle of motion" sid="2643479093781016" type="bullet2">
+                                                    <param id="0" name="Angle">Enemies.enemyangle</param>
+                                                </action>
+                                                <action id="-9" name="Set value" sid="8209630609130616" type="System">
+                                                    <param id="0" name="Variable">enemyid2</param>
+                                                    <param id="1" name="Value">&quot;&quot;</param>
+                                                </action>
+                                            </actions>
+                                        </event-block>
+                                    </sub-events>
+                                </event-block>
+                            </sub-events>
+                        </event-block>
+                        <comment>Looping through the list of enemies, updating there positions, creating them if they are new.</comment>
+                        <event-block sid="1709417665745934">
+                            <conditions>
+                                <condition id="-10" name="For" sid="1550291262830433" type="System">
+                                    <param id="0" name="Name">&quot;LoopTokens&quot;</param>
+                                    <param id="1" name="Start index">0</param>
+                                    <param id="2" name="End index">tokencount(enemyUnits,&quot;[-]&quot;)  - 2</param>
+                                </condition>
+                            </conditions>
+                            <actions>
+                                <action id="-9" name="Set value" sid="9729465279303585" type="System">
+                                    <param id="0" name="Variable">enemyid</param>
+                                    <param id="1" name="Value">int(tokenat(tokenat(enemyUnits ,loopindex,&quot;[-]&quot;),3,&quot;[]&quot;))</param>
+                                </action>
+                            </actions>
+                            <sub-events>
+                                <comment>A small double check to test if a player exists, if I did not add this, I would get some weird results on occassion ....</comment>
+                                <event-block sid="8185270688148428">
+                                    <conditions>
+                                        <condition id="-34" name="Pick by evaluate" sid="2227771575830855" type="System">
+                                            <param id="0" name="Object">Enemies</param>
+                                            <param id="1" name="Expression">int(Enemies.unitid) = enemyid</param>
+                                        </condition>
+                                    </conditions>
+                                    <actions />
+                                </event-block>
+                                <comment>Player doesnt seem to be on the battlefield, and their state is not dead    (state = no)</comment>
+                                <event-block sid="1855339653422589">
+                                    <conditions>
+                                        <condition id="-22" name="Else" sid="2470510991863369" type="System" />
+                                        <condition id="-14" name="Compare variable" sid="4940635184097221" type="System">
+                                            <param id="0" name="Variable">exists</param>
+                                            <param id="1" name="Comparison">0</param>
+                                            <param id="2" name="Value">0</param>
+                                        </condition>
+                                        <condition id="-8" inverted="1" name="Compare two values" sid="5606552291675406" type="System">
+                                            <param id="0" name="First value">str(tokenat(tokenat(enemyUnits ,loopindex,&quot;[-]&quot;),5,&quot;[]&quot;))</param>
+                                            <param id="1" name="Comparison">0</param>
+                                            <param id="2" name="Second value">&quot;yes&quot;</param>
+                                        </condition>
+                                    </conditions>
+                                    <actions>
+                                        <action id="-3" name="Create object" sid="7464659946932137" type="System">
+                                            <param id="0" name="Object to create">Enemies</param>
+                                            <param id="1" name="Layer">0</param>
+                                            <param id="2" name="X">int(tokenat(tokenat(enemyUnits ,loopindex,&quot;[-]&quot;),0,&quot;[]&quot;))</param>
+                                            <param id="3" name="Y"> int(tokenat(tokenat(enemyUnits ,loopindex,&quot;[-]&quot;),1,&quot;[]&quot;))</param>
+                                        </action>
+                                        <action id="-8" name="Set angle" sid="7042924567318348" type="Enemies">
+                                            <param id="0" name="Angle">float(tokenat(tokenat(enemyUnits ,loopindex,&quot;[-]&quot;),2,&quot;[]&quot;))</param>
+                                        </action>
+                                        <action id="-10" name="Set value" sid="743357088759617" type="Enemies">
+                                            <param id="0" name="Instance variable">locx</param>
+                                            <param id="1" name="Value">float(tokenat(tokenat(enemyUnits ,loopindex,&quot;[-]&quot;),0,&quot;[]&quot;))</param>
+                                        </action>
+                                        <action id="-10" name="Set value" sid="7103852316788332" type="Enemies">
+                                            <param id="0" name="Instance variable">locy</param>
+                                            <param id="1" name="Value">float(tokenat(tokenat(enemyUnits ,loopindex,&quot;[-]&quot;),1,&quot;[]&quot;))</param>
+                                        </action>
+                                        <action id="-10" name="Set value" sid="7538647074011413" type="Enemies">
+                                            <param id="0" name="Instance variable">enemyangle</param>
+                                            <param id="1" name="Value">float(tokenat(tokenat(enemyUnits ,loopindex,&quot;[-]&quot;),2,&quot;[]&quot;))</param>
+                                        </action>
+                                        <action id="-3" name="Set position" sid="1264888353648481" type="Enemies">
+                                            <param id="0" name="X">Enemies.locx</param>
+                                            <param id="1" name="Y">Enemies.locy</param>
+                                        </action>
+                                        <action id="-10" name="Set value" sid="8803977442544169" type="Enemies">
+                                            <param id="0" name="Instance variable">unitid</param>
+                                            <param id="1" name="Value">tokenat(tokenat(enemyUnits ,loopindex,&quot;[-]&quot;),3,&quot;[]&quot;)</param>
+                                        </action>
+                                    </actions>
+                                </event-block>
+                                <variable constant="0" name="exists" sid="9841364406090446" static="0" type="number">0</variable>
+                                <comment>We use the exists variable here, to determine wheter or not an enemy is known on the battle field. If its known, exists becomes 1</comment>
+                                <event-block sid="4201942701483141">
+                                    <conditions>
+                                        <condition id="-34" name="Pick by evaluate" sid="5552438586426183" type="System">
+                                            <param id="0" name="Object">Enemies</param>
+                                            <param id="1" name="Expression">int(Enemies.unitid) = enemyid</param>
+                                        </condition>
+                                        <condition id="-4" name="Trigger once while true" sid="6108972959312015" type="System" />
+                                    </conditions>
+                                    <actions>
+                                        <action id="-9" name="Set value" sid="9805198230698959" type="System">
+                                            <param id="0" name="Variable">exists</param>
+                                            <param id="1" name="Value">1</param>
+                                        </action>
+                                        <action id="-8" name="Set angle" sid="485385457761405" type="Enemies">
+                                            <param id="0" name="Angle">float(tokenat(tokenat(enemyUnits ,loopindex,&quot;[-]&quot;),2,&quot;[]&quot;))</param>
+                                        </action>
+                                        <action id="-10" name="Set value" sid="3566189282907072" type="Enemies">
+                                            <param id="0" name="Instance variable">enemyangle</param>
+                                            <param id="1" name="Value">float(tokenat(tokenat(enemyUnits ,loopindex,&quot;[-]&quot;),2,&quot;[]&quot;))</param>
+                                        </action>
+                                        <action id="-10" name="Set value" sid="9997606593157364" type="Enemies">
+                                            <param id="0" name="Instance variable">locx</param>
+                                            <param id="1" name="Value">float(tokenat(tokenat(enemyUnits ,loopindex,&quot;[-]&quot;),0,&quot;[]&quot;))</param>
+                                        </action>
+                                        <action id="-10" name="Set value" sid="9473015455618525" type="Enemies">
+                                            <param id="0" name="Instance variable">locy</param>
+                                            <param id="1" name="Value">float(tokenat(tokenat(enemyUnits ,loopindex,&quot;[-]&quot;),1,&quot;[]&quot;))</param>
+                                        </action>
+                                        <action id="-3" name="Set position" sid="2188599905808181" type="Enemies">
+                                            <param id="0" name="X">Enemies.locx</param>
+                                            <param id="1" name="Y">Enemies.locy</param>
+                                        </action>
+                                        <action id="-10" name="Set value" sid="5524063426045614" type="Enemies">
+                                            <param id="0" name="Instance variable">dead</param>
+                                            <param id="1" name="Value">tokenat(tokenat(enemyUnits ,loopindex,&quot;[-]&quot;),5,&quot;[]&quot;)</param>
+                                        </action>
+                                    </actions>
+                                    <sub-events>
+                                        <comment>Player was killed</comment>
+                                        <event-block sid="3647917875743828">
+                                            <conditions>
+                                                <condition id="-7" name="Compare instance variable" sid="7860720595720653" type="Enemies">
+                                                    <param id="0" name="Instance variable">dead</param>
+                                                    <param id="1" name="Comparison">0</param>
+                                                    <param id="2" name="Value">&quot;yes&quot;</param>
+                                                </condition>
+                                                <condition id="-4" name="Trigger once while true" sid="1769989849358165" type="System" />
+                                            </conditions>
+                                            <actions>
+                                                <action id="25" name="Play at object" sid="5411651984744801" type="Audio">
+                                                    <param id="0" name="Audio file">Explosion 2</param>
+                                                    <param id="1" name="Loop">0</param>
+                                                    <param id="2" name="Volume">-10</param>
+                                                    <param id="3" name="Object">Enemies</param>
+                                                    <param id="4" name="Inner angle">0</param>
+                                                    <param id="5" name="Outer angle">0</param>
+                                                    <param id="6" name="Outer gain">360</param>
+                                                    <param id="7" name="Tag (optional)">&quot;&quot;</param>
+                                                </action>
+                                                <action id="0" name="Spawn another object" sid="9043166051571419" type="Enemies">
+                                                    <param id="0" name="Object">explosion</param>
+                                                    <param id="1" name="Layer">0</param>
+                                                    <param id="2" name="Image point">0</param>
+                                                </action>
+                                                <action id="-9" name="Destroy" sid="4245711583189345" type="Enemies" />
+                                            </actions>
+                                        </event-block>
+                                    </sub-events>
+                                </event-block>
+                            </sub-events>
+                        </event-block>
+                        <comment>Player was previously killed</comment>
+                        <event-block sid="3933123951540195">
+                            <conditions>
+                                <condition id="-14" name="Compare variable" sid="7725569328946042" type="System">
+                                    <param id="0" name="Variable">playerstate</param>
+                                    <param id="1" name="Comparison">0</param>
+                                    <param id="2" name="Value">&quot;died&quot;</param>
+                                </condition>
+                                <condition id="-4" name="Trigger once while true" sid="8350899904590409" type="System" />
+                            </conditions>
+                            <actions>
+                                <action id="-24" name="Stop loop" sid="6261536013739693" type="System" />
+                                <action id="-12" name="Set group active" sid="9536803360033461" type="System">
+                                    <param id="0" name="Group name">&quot;GetInfo&quot;</param>
+                                    <param id="1" name="State">0</param>
+                                </action>
+                                <action id="-9" name="Destroy" sid="3312092864375372" type="player" />
+                                <action id="0" name="Play" sid="4999828630921973" type="Audio">
+                                    <param id="0" name="Audio file">Explosion 3</param>
+                                    <param id="2" name="Loop">0</param>
+                                    <param id="3" name="Volume">0</param>
+                                    <param id="1" name="Tag (optional)">&quot;&quot;</param>
+                                </action>
+                                <action id="-15" name="Set visible" sid="2490398452393435" type="gameover">
+                                    <param id="0" name="Visibility">1</param>
+                                </action>
+                            </actions>
+                        </event-block>
+                        <comment>Player is still alive, next update call</comment>
+                        <event-block sid="529588482700812">
+                            <conditions>
+                                <condition id="-4" name="Trigger once while true" sid="8871970881100812" type="System" />
+                                <condition id="-14" inverted="1" name="Compare variable" sid="2534512674926882" type="System">
+                                    <param id="0" name="Variable">playerstate</param>
+                                    <param id="1" name="Comparison">0</param>
+                                    <param id="2" name="Value">&quot;died&quot;</param>
+                                </condition>
+                            </conditions>
+                            <actions>
+                                <action id="0" name="Call function" sid="3151215137926589" type="Function">
+                                    <param id="0" name="Name">&quot;requesting&quot;</param>
+                                    <param id="1" name="Parameter {n}">&quot;updateplayerpositions&quot;{###}int(playerbase.X) &amp; &quot;-&quot;&amp; int(playerbase.Y) &amp;&quot;-&quot;&amp; int(playerbase.Angle)&amp;&quot;-&quot;&amp;player.unitid{###}CheckCode</param>
+                                </action>
+                            </actions>
+                        </event-block>
+                    </sub-events>
+                </event-block>
+            </sub-events>
+        </event-group>
+        <event-group description="" sid="66147033274861" title="Controles">
+            <sub-events>
+                <comment>General player movement, and a call to ajax to post the shot fired with details from the player.</comment>
+                <event-block sid="6003382103395531">
+                    <conditions>
+                        <condition id="3" name="On key released" sid="682162493439088" type="Keyboard">
+                            <param id="0" name="Key">65 (A)</param>
+                        </condition>
+                    </conditions>
+                    <actions>
+                        <action id="-8" name="Set angle" sid="5521526171177325" type="playerbase">
+                            <param id="0" name="Angle">self.Angle - 22.5</param>
+                        </action>
+                        <action id="-8" name="Set angle" sid="8387302630174225" type="player">
+                            <param id="0" name="Angle">self.Angle - 22.5</param>
+                        </action>
+                    </actions>
+                </event-block>
+                <event-block sid="4703443457810487">
+                    <conditions>
+                        <condition id="0" name="On key pressed" sid="9635118525642833" type="Keyboard">
+                            <param id="0" name="Key">68 (D)</param>
+                        </condition>
+                    </conditions>
+                    <actions>
+                        <action id="-8" name="Set angle" sid="8177782961542082" type="playerbase">
+                            <param id="0" name="Angle">self.Angle + 22.5</param>
+                        </action>
+                        <action id="-8" name="Set angle" sid="1564334631852703" type="player">
+                            <param id="0" name="Angle">self.Angle + 22.5</param>
+                        </action>
+                    </actions>
+                </event-block>
+                <event-block sid="3861928630538337">
+                    <conditions>
+                        <condition id="2" name="Key is down" sid="6358921413370978" type="Keyboard">
+                            <param id="0" name="Key">87 (W)</param>
+                        </condition>
+                    </conditions>
+                    <actions>
+                        <action id="-17" name="Move forward" sid="6733400171880051" type="playerbase">
+                            <param id="0" name="Distance">0.4 * 60 * dt</param>
+                        </action>
+                        <action id="-4" name="Set position to another object" sid="456240178599874" type="player">
+                            <param id="0" name="Object">playerbase</param>
+                            <param id="1" name="Image point (optional)">0</param>
+                        </action>
+                    </actions>
+                </event-block>
+                <event-block sid="502000902989523">
+                    <conditions>
+                        <condition id="2" name="Key is down" sid="328283299072897" type="Keyboard">
+                            <param id="0" name="Key">83 (S)</param>
+                        </condition>
+                    </conditions>
+                    <actions>
+                        <action id="-17" name="Move forward" sid="3172337734443621" type="playerbase">
+                            <param id="0" name="Distance">-0.1</param>
+                        </action>
+                        <action id="-4" name="Set position to another object" sid="5690767790971084" type="player">
+                            <param id="0" name="Object">playerbase</param>
+                            <param id="1" name="Image point (optional)">0</param>
+                        </action>
+                    </actions>
+                </event-block>
+                <comment>By means of time a player is only able to shoot once every 5 seconds, this prevents bad sync experiences</comment>
+                <event-block sid="6796551733288279">
+                    <conditions>
+                        <condition id="0" name="On key pressed" sid="8297134269522757" type="Keyboard">
+                            <param id="0" name="Key">32 (Space)</param>
+                        </condition>
+                        <condition id="-14" name="Compare variable" sid="3375610680757892" type="System">
+                            <param id="0" name="Variable">lastshot</param>
+                            <param id="1" name="Comparison">2</param>
+                            <param id="2" name="Value">time - 5</param>
+                        </condition>
+                    </conditions>
+                    <actions>
+                        <action id="0" name="Spawn another object" sid="684955012858519" type="player">
+                            <param id="0" name="Object">bullet1</param>
+                            <param id="1" name="Layer">0</param>
+                            <param id="2" name="Image point">0</param>
+                        </action>
+                        <action id="-8" name="Set angle" sid="2390965893845763" type="bullet1">
+                            <param id="0" name="Angle">playerbase.Angle</param>
+                        </action>
+                        <action behavior="Bullet" id="5" name="Set enabled" sid="5522731933703462" type="bullet1">
+                            <param id="0" name="State">1</param>
+                        </action>
+                        <action id="-9" name="Set value" sid="3445644302420197" type="System">
+                            <param id="0" name="Variable">lastshot</param>
+                            <param id="1" name="Value">time</param>
+                        </action>
+                        <action id="0" name="Call function" sid="7681072337441756" type="Function">
+                            <param id="0" name="Name">&quot;requesting&quot;</param>
+                            <param id="1" name="Parameter {n}">&quot;shotfired&quot;{###}playerbase.X &amp; &quot;-&quot;&amp; playerbase.Y&amp;&quot;-&quot;&amp; playerbase.Angle&amp;&quot;-&quot;&amp;player.unitid{###}CheckCode</param>
+                        </action>
+                    </actions>
+                </event-block>
+                <comment>Player has died, and can restart, make a call to the database to set player state to not dead</comment>
+                <event-block sid="4273587080032479">
+                    <conditions>
+                        <condition id="3" name="On touched object" sid="5484453458209952" type="Touch">
+                            <param id="0" name="Object">gameover</param>
+                        </condition>
+                        <condition id="-9" name="Is visible" sid="7941121478818229" type="gameover" />
+                    </conditions>
+                    <actions>
+                        <action id="0" name="Call function" sid="3200152305701976" type="Function">
+                            <param id="0" name="Name">&quot;requesting&quot;</param>
+                            <param id="1" name="Parameter {n}">&quot;playerrestart&quot;{###}player.UnitId{###}CheckCode</param>
+                        </action>
+                        <action id="-12" name="Set group active" sid="1024022277144055" type="System">
+                            <param id="0" name="Group name">&quot;GetInfo&quot;</param>
+                            <param id="1" name="State">0</param>
+                        </action>
+                        <action id="-16" name="Wait" sid="8443939859643845" type="System">
+                            <param id="0" name="Seconds">3</param>
+                        </action>
+                        <action id="-21" name="Reset global variables" sid="6276143335895109" type="System" />
+                        <action id="-26" name="Restart layout" sid="5307353608790575" type="System" />
+                    </actions>
+                </event-block>
+            </sub-events>
+        </event-group>
+        <comment>2 types of bullets, one shot by the player, and the other shot by enemies,  only one actually kills, the players</comment>
+        <event-group description="" sid="3497175966007273" title="Rockets">
+            <sub-events>
+                <event-block sid="3728549334173277">
+                    <conditions>
+                        <condition id="0" name="On collision with another object" sid="5051289453235689" type="player">
+                            <param id="0" name="Object">bullet2</param>
+                        </condition>
+                    </conditions>
+                    <actions>
+                        <action id="0" name="Play" sid="1272903263900238" type="Audio">
+                            <param id="0" name="Audio file">Explosion 2</param>
+                            <param id="2" name="Loop">0</param>
+                            <param id="3" name="Volume">-5</param>
+                            <param id="1" name="Tag (optional)">&quot;boom&quot;</param>
+                        </action>
+                        <action id="-9" name="Destroy" sid="1567328046130574" type="bullet2" />
+                    </actions>
+                </event-block>
+                <event-block sid="5692372386788516">
+                    <conditions>
+                        <condition id="0" name="On collision with another object" sid="6961608485269117" type="Enemies">
+                            <param id="0" name="Object">bullet1</param>
+                        </condition>
+                    </conditions>
+                    <actions>
+                        <action id="0" name="Play" sid="9446578117692268" type="Audio">
+                            <param id="0" name="Audio file">Explosion 2</param>
+                            <param id="2" name="Loop">0</param>
+                            <param id="3" name="Volume">-5</param>
+                            <param id="1" name="Tag (optional)">&quot;boom&quot;</param>
+                        </action>
+                        <action id="0" name="Call function" sid="1675050578935138" type="Function">
+                            <param id="0" name="Name">&quot;requesting&quot;</param>
+                            <param id="1" name="Parameter {n}">&quot;playerhit&quot;{###}float(Enemies.X) &amp; &quot;-&quot;&amp; float(Enemies.Y) &amp;&quot;-&quot;&amp;Enemies.unitid&amp;&quot;-&quot;&amp;player.UnitId{###}CheckCode</param>
+                        </action>
+                        <action id="-9" name="Destroy" sid="9318151226064306" type="bullet1" />
+                    </actions>
+                </event-block>
+            </sub-events>
+        </event-group>
+        <comment></comment>
+    </events>
+</c2eventsheet>
